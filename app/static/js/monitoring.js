@@ -1,20 +1,40 @@
 class EARGraph {
     constructor(containerId) {
         this.graphContainer = document.getElementById(containerId);
+        
+        // Default dimensions if container is not available
         this.margin = {top: 20, right: 20, bottom: 30, left: 50};
-        this.width = this.graphContainer.clientWidth - this.margin.left - this.margin.right;
-        this.height = this.graphContainer.clientHeight - this.margin.top - this.margin.bottom;
+        this.width = 300; // Default width
+        this.height = 200; // Default height
+
+        // Update dimensions when container is available
+        if (this.graphContainer) {
+            const containerRect = this.graphContainer.getBoundingClientRect();
+            this.width = Math.max(containerRect.width - this.margin.left - this.margin.right, 300);
+            this.height = Math.max(containerRect.height - this.margin.top - this.margin.bottom, 200);
+        }
         
         this.liveGraphData = [];
         this.initializeGraph();
     }
 
     initializeGraph() {
+        // Check if graph container exists and has an ID
+        if (!this.graphContainer) {
+            console.warn('Graph container not found');
+            return;
+        }
+
         // Clear any existing SVG
-        d3.select(`#${this.graphContainer.id} svg`).remove();
+        if (this.graphContainer.id) {
+            d3.select(`#${this.graphContainer.id} svg`).remove();
+        } else {
+            // Fallback if no ID
+            d3.select(this.graphContainer).select('svg').remove();
+        }
 
         // Create SVG
-        this.svg = d3.select(`#${this.graphContainer.id}`)
+        this.svg = d3.select(this.graphContainer)
             .append("svg")
             .attr("width", this.width + this.margin.left + this.margin.right)
             .attr("height", this.height + this.margin.top + this.margin.bottom)
@@ -110,6 +130,15 @@ class WebcamMonitor {
                     frameRate: { ideal: 30 }
                 } 
             });
+            let videoContainer = document.querySelector('.video-container');
+            if (!videoContainer) {
+                const videoContainer = document.createElement('div');
+                videoContainer.classList.add('video-container');
+                videoContainer.innerHTML = `<canvas id="displayCanvas"></canvas>`;
+                const recordSection = document.querySelector('.record-section');
+                recordSection.insertAdjacentElement('afterend', videoContainer);
+                this.displayCanvas = videoContainer.querySelector('#displayCanvas');  // Update displayCanvas reference
+            }
 
             // Get the first video track
             this.videoTrack = this.mediaStream.getVideoTracks()[0];
@@ -233,17 +262,6 @@ class WebcamMonitor {
         this.recordBtn.classList.remove('recording');
         this.recordBtn.textContent = 'Start Recording';
         
-        // Reset video panel
-        const videoPanel = document.querySelector('.video-container');
-        videoPanel.classList.remove('active');
-        videoPanel.style.minHeight = '200px';
-
-        // Clear canvas
-        const ctx = this.displayCanvas.getContext('2d');
-        ctx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
-        this.displayCanvas.width = 0;
-        this.displayCanvas.height = 0;
-        
         // Close video track
         if (this.videoTrack) {
             this.videoTrack.stop();
@@ -269,23 +287,50 @@ class WebcamMonitor {
 
 // Initialization when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Create graph instance first
-    const earGraph = new EARGraph('liveGraphData');
-
-    // Create webcam monitor, passing graph instance
-    const monitor = new WebcamMonitor('displayCanvas', earGraph);
-
+    const monitor = new WebcamMonitor(null);
+    let graphContainer = null;
+    let earGraph = null;
     // Button event listener
     document.getElementById('recordBtn').addEventListener('click', () => {
         if (monitor.isRecording) {
             monitor.stopRecording();
         } else {
+            // Only create graph container if it doesn't exist
+            if (!document.querySelector('.viz-panel')) {
+                graphContainer = document.createElement('div');
+                graphContainer.classList.add('section', 'viz-panel');
+                graphContainer.innerHTML = `
+                    <h2>Live Monitoring</h2>
+                    <div id="liveGraphData"></div>
+                `;
+                const recordSection = document.querySelector('.record-section');
+                if (recordSection) {
+                    recordSection.insertAdjacentElement('afterend', graphContainer);
+                }
+            }
+            const liveGraphDataElement = document.getElementById('liveGraphData');
+            if (!earGraph && liveGraphDataElement) {
+                try {
+                    earGraph = new EARGraph('liveGraphData');
+                } catch (error) {
+                    console.error('Error creating graph:', error);
+                    return;
+                }
+            }
+            
+            if (earGraph) {
+                monitor.graph = earGraph;
+                monitor.startRecording();
+            } else {
+                console.error('Could not create graph');
+            }    
+            monitor.graph = earGraph;
             monitor.startRecording();
         }
     });
-
-    // Handle window resize for graph
     window.addEventListener('resize', () => {
-        earGraph.handleResize();
+        if (earGraph) {
+            earGraph.handleResize();
+        }
     });
 });
