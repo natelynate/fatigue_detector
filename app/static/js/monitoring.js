@@ -1,12 +1,106 @@
+// Graph Handling Class
+class EARGraph {
+    constructor(containerId) {
+        this.graphContainer = document.getElementById(containerId);
+        this.margin = {top: 20, right: 20, bottom: 30, left: 50};
+        this.width = this.graphContainer.clientWidth - this.margin.left - this.margin.right;
+        this.height = this.graphContainer.clientHeight - this.margin.top - this.margin.bottom;
+        
+        this.liveGraphData = [];
+        this.initializeGraph();
+    }
+
+    initializeGraph() {
+        // Clear any existing SVG
+        d3.select("#" + this.graphContainer.id + " svg").remove();
+
+        // Create SVG
+        this.svg = d3.select("#" + this.graphContainer.id)
+            .append("svg")
+            .attr("width", this.width + this.margin.left + this.margin.right)
+            .attr("height", this.height + this.margin.top + this.margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
+
+        // Initialize scales and line
+        this.x = d3.scaleTime().range([0, this.width]);
+        this.y = d3.scaleLinear().range([this.height, 0]);
+        this.line = d3.line()
+            .x(d => this.x(d.time))
+            .y(d => this.y(d.value))
+            .curve(d3.curveMonotoneX);
+
+        // Add axes
+        this.svg.append("g")
+            .attr("class", "x-axis")
+            .attr("transform", `translate(0,${this.height})`);
+
+        this.svg.append("g")
+            .attr("class", "y-axis");
+
+        // Add path for the line
+        this.svg.append("path")
+            .attr("class", "line")
+            .style("fill", "none")
+            .style("stroke", "#2c3e50")
+            .style("stroke-width", "2px");
+    }
+
+    update(processedData) {
+        if (processedData.value === null) return;
+        
+        this.liveGraphData.push(processedData);
+        
+        // Keep last 100 data points
+        if (this.liveGraphData.length > 100) {
+            this.liveGraphData.shift();
+        }
+
+        // Update scales
+        this.x.domain(d3.extent(this.liveGraphData, d => d.time));
+        this.y.domain([0, d3.max(this.liveGraphData, d => d.value) * 1.1]); // Add 10% padding
+
+        // Update line
+        this.svg.select(".line")
+            .datum(this.liveGraphData)
+            .attr("d", this.line);
+
+        // Update axes
+        this.svg.select(".x-axis").call(d3.axisBottom(this.x));
+        this.svg.select(".y-axis").call(d3.axisLeft(this.y));
+    }
+
+    // Optional: Handle window resize
+    handleResize() {
+        this.width = this.graphContainer.clientWidth - this.margin.left - this.margin.right;
+        this.height = this.graphContainer.clientHeight - this.margin.top - this.margin.bottom;
+        
+        this.svg.attr("width", this.width + this.margin.left + this.margin.right)
+           .attr("height", this.height + this.margin.top + this.margin.bottom);
+        
+        this.x.range([0, this.width]);
+        this.y.range([this.height, 0]);
+        
+        // Re-render the last state
+        if (this.liveGraphData.length > 0) {
+            this.update({
+                time: new Date(),
+                value: this.liveGraphData[this.liveGraphData.length - 1].value
+            });
+        }
+    }
+}
+
+// WebSocket and Video Processing Class
 class WebcamMonitor {
-    constructor() {
+    constructor(displayCanvasId, graphInstance) {
         this.mediaStream = null;
         this.videoTrack = null;
         this.trackProcessor = null;
-        this.trackGenerator = null;
         this.ws = null;
         this.isRecording = false;
-        this.displayCanvas = document.getElementById('displayCanvas');
+        this.displayCanvas = document.getElementById(displayCanvasId);
+        this.graph = graphInstance;
     }
 
     async startRecording() {
@@ -28,9 +122,6 @@ class WebcamMonitor {
                 track: this.videoTrack 
             });
 
-            // Create MediaStreamTrackGenerator for displaying processed frames
-            this.trackGenerator = new MediaStreamTrackGenerator({ kind: 'video' });
-
             // Connect WebSocket
             this.connectWebSocket();
 
@@ -50,11 +141,42 @@ class WebcamMonitor {
             this.isRecording = true;
         };
 
-        this.ws.onmessage = (event) => {
-            // Handle annotated frame from backend
+        this.ws.onmessage = async (event) => {
             if (event.data instanceof Blob) {
-                this.displayAnnotatedFrame(event.data);
+                // Display annotated frame
+                const ctx = this.displayCanvas.getContext('2d');
+                
+                const img = new Image();
+                img.onload = () => {
+                    // Resize canvas to match image
+                    this.displayCanvas.width = img.width;
+                    this.displayCanvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(img.src);
+                };
+                img.src = URL.createObjectURL(event.data);
+            } else {
+                // Parse JSON data
+                try {
+                    const data = JSON.parse(event.data);
+                    // Update graph with processed data
+                    this.graph.update({
+                        time: new Date(data.timestamp * 1000),
+                        value: data.processed_data
+                    });
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error);
+                }
             }
+        };
+
+        this.ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        this.ws.onclose = () => {
+            this.isRecording = false;
+            console.log('WebSocket disconnected');
         };
     }
 
@@ -94,20 +216,6 @@ class WebcamMonitor {
         frameStream.pipeTo(frameSender);
     }
 
-    displayAnnotatedFrame(frame) {
-        const ctx = this.displayCanvas.getContext('2d');
-        
-        const img = new Image();
-        img.onload = () => {
-            // Resize canvas to match image
-            this.displayCanvas.width = img.width;
-            this.displayCanvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            URL.revokeObjectURL(img.src);
-        };
-        img.src = URL.createObjectURL(frame);
-    }
-
     stopRecording() {
         this.isRecording = false;
         
@@ -121,7 +229,7 @@ class WebcamMonitor {
             this.mediaStream.getTracks().forEach(track => track.stop());
         }
 
-        // Close track processor and generator
+        // Close track processor
         if (this.trackProcessor) {
             this.trackProcessor.readable.cancel();
         }
@@ -134,11 +242,25 @@ class WebcamMonitor {
     }
 }
 
-const monitor = new WebcamMonitor();
-document.getElementById('recordBtn').addEventListener('click', () => {
-    if (monitor.isRecording) {
-        monitor.stopRecording();
-    } else {
-        monitor.startRecording();
-    }
+// Usage
+document.addEventListener('DOMContentLoaded', () => {
+    // Create graph instance first
+    const earGraph = new EARGraph('liveGraphData');
+
+    // Create webcam monitor, passing graph instance
+    const monitor = new WebcamMonitor('displayCanvas', earGraph);
+
+    // Button event listener
+    document.getElementById('recordBtn').addEventListener('click', () => {
+        if (monitor.isRecording) {
+            monitor.stopRecording();
+        } else {
+            monitor.startRecording();
+        }
+    });
+
+    // Optional: Handle window resize
+    window.addEventListener('resize', () => {
+        earGraph.handleResize();
+    });
 });
