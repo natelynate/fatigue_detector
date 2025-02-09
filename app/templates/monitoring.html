@@ -1,0 +1,46 @@
+<!-- templates/monitoring.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Fatigue Monitoring</title>
+    <link rel="stylesheet" href="/static/css/monitoring.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Record Button Section -->
+        <div class="section record-section">
+            <button id="recordBtn" class="record-button">
+                <span class="record-icon"></span>
+                Start Recording
+            </button>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="section settings-panel">
+            <h2>Settings</h2>
+            <div class="settings-content">
+                <!-- Settings will be added here -->
+            </div>
+        </div>
+
+        <!-- Video Stream Panel -->
+        <div class="section video-panel">
+            <h2>Current Video Stream</h2>
+            <div class="video-container">
+                <video id="webcamFeed" autoplay playsinline></video>
+            </div>
+        </div>
+
+        <!-- Visualization Panel -->
+        <div class="section viz-panel">
+            <h2>Live Monitoring</h2>
+            <div id="liveGraph"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/monitoring.js"></script>
+</body>
+</html>
