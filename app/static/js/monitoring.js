@@ -1,4 +1,3 @@
-// Graph Handling Class
 class EARGraph {
     constructor(containerId) {
         this.graphContainer = document.getElementById(containerId);
@@ -12,10 +11,10 @@ class EARGraph {
 
     initializeGraph() {
         // Clear any existing SVG
-        d3.select("#" + this.graphContainer.id + " svg").remove();
+        d3.select(`#${this.graphContainer.id} svg`).remove();
 
         // Create SVG
-        this.svg = d3.select("#" + this.graphContainer.id)
+        this.svg = d3.select(`#${this.graphContainer.id}`)
             .append("svg")
             .attr("width", this.width + this.margin.left + this.margin.right)
             .attr("height", this.height + this.margin.top + this.margin.bottom)
@@ -70,16 +69,13 @@ class EARGraph {
         this.svg.select(".y-axis").call(d3.axisLeft(this.y));
     }
 
-    // Optional: Handle window resize
+    // Handle window resize
     handleResize() {
         this.width = this.graphContainer.clientWidth - this.margin.left - this.margin.right;
         this.height = this.graphContainer.clientHeight - this.margin.top - this.margin.bottom;
         
-        this.svg.attr("width", this.width + this.margin.left + this.margin.right)
-           .attr("height", this.height + this.margin.top + this.margin.bottom);
-        
-        this.x.range([0, this.width]);
-        this.y.range([this.height, 0]);
+        // Recreate the entire graph
+        this.initializeGraph();
         
         // Re-render the last state
         if (this.liveGraphData.length > 0) {
@@ -101,6 +97,7 @@ class WebcamMonitor {
         this.isRecording = false;
         this.displayCanvas = document.getElementById(displayCanvasId);
         this.graph = graphInstance;
+        this.recordBtn = document.getElementById('recordBtn');
     }
 
     async startRecording() {
@@ -122,6 +119,10 @@ class WebcamMonitor {
                 track: this.videoTrack 
             });
 
+            // Update record button state
+            this.recordBtn.classList.add('recording');
+            this.recordBtn.textContent = 'Stop Recording';
+
             // Connect WebSocket
             this.connectWebSocket();
 
@@ -130,11 +131,13 @@ class WebcamMonitor {
 
         } catch (error) {
             console.error('Recording start error:', error);
+            alert('Failed to start recording. Please check camera permissions.');
         }
     }
 
     connectWebSocket() {
         this.ws = new WebSocket('ws://localhost:8000/monitoring/websocket_process');
+        const videoContainer = document.querySelector('.video-container');
 
         this.ws.onopen = () => {
             console.log('WebSocket connected');
@@ -151,6 +154,12 @@ class WebcamMonitor {
                     // Resize canvas to match image
                     this.displayCanvas.width = img.width;
                     this.displayCanvas.height = img.height;
+                    // Adjust video container to match frame dimensions
+                    if (videoContainer) {
+                        videoContainer.classList.add('active');
+                        videoContainer.style.height = `${img.height}px`;
+                    }
+                    
                     ctx.drawImage(img, 0, 0);
                     URL.revokeObjectURL(img.src);
                 };
@@ -172,6 +181,7 @@ class WebcamMonitor {
 
         this.ws.onerror = (error) => {
             console.error('WebSocket error:', error);
+            this.stopRecording();
         };
 
         this.ws.onclose = () => {
@@ -219,6 +229,21 @@ class WebcamMonitor {
     stopRecording() {
         this.isRecording = false;
         
+        // Reset record button
+        this.recordBtn.classList.remove('recording');
+        this.recordBtn.textContent = 'Start Recording';
+        
+        // Reset video panel
+        const videoPanel = document.querySelector('.video-container');
+        videoPanel.classList.remove('active');
+        videoPanel.style.minHeight = '200px';
+
+        // Clear canvas
+        const ctx = this.displayCanvas.getContext('2d');
+        ctx.clearRect(0, 0, this.displayCanvas.width, this.displayCanvas.height);
+        this.displayCanvas.width = 0;
+        this.displayCanvas.height = 0;
+        
         // Close video track
         if (this.videoTrack) {
             this.videoTrack.stop();
@@ -242,7 +267,7 @@ class WebcamMonitor {
     }
 }
 
-// Usage
+// Initialization when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Create graph instance first
     const earGraph = new EARGraph('liveGraphData');
@@ -259,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Optional: Handle window resize
+    // Handle window resize for graph
     window.addEventListener('resize', () => {
         earGraph.handleResize();
     });

@@ -14,31 +14,40 @@ body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
+    display: flex;
+    justify-content: center;
 }
 
 .container {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
 }
 
 .section {
+    width: 100%;
     background: var(--panel-bg);
     border-radius: var(--border-radius);
     padding: 1.5rem;
-    margin-bottom: 2rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
 }
 
 h2 {
     margin: 0 0 1rem 0;
     color: var(--primary-color);
     font-weight: 500;
+    text-align: center;
 }
 
 /* Record Button Styles */
 .record-section {
-    text-align: center;
+    display: flex;
+    justify-content: center;
 }
 
 .record-button {
@@ -57,6 +66,11 @@ h2 {
 
 .record-button:hover {
     background-color: #c0392b;
+    transform: scale(1.05);
+}
+
+.record-button.recording {
+    background-color: #34495e;
 }
 
 .record-icon {
@@ -67,17 +81,58 @@ h2 {
     display: inline-block;
 }
 
-/* Video Stream Styles */
+/* Video Container Styles */
 .video-container {
-    aspect-ratio: 16/9;
-    background-color: #000;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
     border-radius: var(--border-radius);
     overflow: hidden;
+    height: auto; /* Allow height to be dynamically set */
+    min-height: 200px;
 }
+
+.video-container.active {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+#displayCanvas {
+    max-width: 100%;
+    border-radius: var(--border-radius);
+}
+
 /* Visualization Panel */
+.viz-panel {
+    min-height: 350px;
+    width: 100%;
+}
+
 #liveGraphData {
     width: 100%;
     height: 300px;
     background-color: var(--bg-color);
     border-radius: var(--border-radius);
+}
+
+/* D3.js Graph Styles */
+.line {
+    fill: none;
+    stroke: var(--primary-color);
+    stroke-width: 2px;
+}
+
+.x-axis, .y-axis {
+    font-size: 12px;
+    color: var(--text-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container {
+        max-width: 100%;
+        padding: 1rem;
+    }
 }
