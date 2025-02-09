@@ -27,17 +27,16 @@
         </div>
 
         <!-- Video Stream Panel -->
+        </div>
         <div class="section video-panel">
-            <h2>Current Video Stream</h2>
-            <div class="video-container">
-                <video id="webcamFeed" autoplay playsinline></video>
-            </div>
+            <video id="webcamFeed" autoplay playsinline style="display: none;"></video>
+            <canvas id="displayCanvas"></canvas>
         </div>
 
         <!-- Visualization Panel -->
         <div class="section viz-panel">
             <h2>Live Monitoring</h2>
-            <div id="liveGraph"></div>
+            <div id="liveGraphData"></div>
         </div>
     </div>
 
