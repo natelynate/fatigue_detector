@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 import numpy as np
 import time
 import cv2
+import json
 
 router = APIRouter(prefix="/monitoring", tags=["monitoring"])
 
@@ -25,13 +26,17 @@ async def websocket_process(websocket: WebSocket):
     try:
         while True:
             try:
-                # Decode and convert to np array from websocket
-                frame_data = await websocket.receive_bytes()
-                nparr = np.frombuffer(frame_data, np.uint8)       
+                # Receive data packet and 
+                data = await websocket.receive_bytes()
+                metadata_str, frame_bytes = data.split(b'\n', 1)
+                metadata = json.loads(metadata_str)
+                timestamp = metadata['timestamp']
+                nparr = np.frombuffer(frame_bytes, np.uint8)       
                 frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                 
+                # Process
                 annotated_frame, ear_value = detector.process_frame(frame)
-                # print(f"Processed frame. EAR: {ear_value}", time.time())
+                
                 # Convert annotated frame back to bytes for backchanneling
                 _, buffer = cv2.imencode('.jpg', annotated_frame)
                 frame_bytes = buffer.tobytes()
@@ -39,7 +44,7 @@ async def websocket_process(websocket: WebSocket):
                 # Send back results
                 await websocket.send_bytes(frame_bytes)  # Send annotated frame first
                 await websocket.send_json({
-                    "timestamp": time.time(),
+                    "timestamp": timestamp,
                     "processed_data": -0.1 if ear_value is None else float(ear_value)
                     })
             except Exception as e:
