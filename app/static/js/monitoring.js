@@ -85,7 +85,6 @@ class EARGraph {
         if (this.liveGraphData.length > 300) {
             this.liveGraphData.shift();
         }
-        console.log('Current y domain:', this.y.domain());
 
         // Update scales
         this.x.domain(d3.extent(this.liveGraphData, d => d.time));
@@ -144,7 +143,7 @@ class WebcamMonitor {
                 video: { 
                     width: { ideal: 1280 },
                     height: { ideal: 720 },
-                    frameRate: { ideal: 60 }
+                    frameRate: { ideal: 30 }
                 } 
             });
             let videoContainer = document.querySelector('.video-container');

@@ -31,8 +31,8 @@ class BlinkDetector:
         self.counter = 0
         self.closure = None
         self.total_blinks = 0
-        self.EAR_THRESHOLD = 0.27
-        self.MIN_CONSECUTIVE_FRAMES = 3 # Minimum number of consecutive frames to be recognized as a blink
+        self.EAR_THRESHOLD = 0.28
+        self.MIN_CONSECUTIVE_FRAMES = 4 # Minimum number of consecutive frames to be recognized as a blink
         self.MAX_CONSECUTIVE_FRAMES = 24
 
         # configs for the instance
@@ -86,12 +86,12 @@ class BlinkDetector:
                 print(f"self.counter:{self.counter}", ear, self.total_blinks)
             
             elif ear > self.EAR_THRESHOLD:  # Eye is open
-                if self.closure is not None:  
+                if self.closure is not None: # Eye was closed
                     if self.counter >= self.MIN_CONSECUTIVE_FRAMES:
                         self.total_blinks += 1
                 # Reset tracking variables
-                self.closure = None
-                self.counter = 0
+                    self.closure = None
+                    self.counter = 0
 
             if self.annotate: # Visualization
                 for eye in [left_eye, right_eye]:
