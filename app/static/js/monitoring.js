@@ -341,8 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.error('Could not create graph');
             }    
-            monitor.graph = earGraph;
-            monitor.startRecording();
         }
     });
     window.addEventListener('resize', () => {
