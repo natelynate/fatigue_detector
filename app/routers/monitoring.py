@@ -31,7 +31,7 @@ async def websocket_process(websocket: WebSocket):
                 frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                 
                 annotated_frame, ear_value = detector.process_frame(frame)
-                print(f"Processed frame. EAR: {ear_value}")
+                print(f"Processed frame. EAR: {ear_value}", time.time())
                 # Convert annotated frame back to bytes for backchanneling
                 _, buffer = cv2.imencode('.jpg', annotated_frame)
                 frame_bytes = buffer.tobytes()
@@ -40,7 +40,7 @@ async def websocket_process(websocket: WebSocket):
                 await websocket.send_bytes(frame_bytes)  # Send annotated frame first
                 await websocket.send_json({
                     "timestamp": time.time(),
-                    "processed_data": -1 if ear_value is None else float(ear_value)
+                    "processed_data": -0.1 if ear_value is None else float(ear_value)
                     })
             except Exception as e:
                 print(f"Error processing frame: {e}")

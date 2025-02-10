@@ -24,6 +24,7 @@ class EARGraph {
             console.warn('Graph container not found');
             return;
         }
+        console.log('Initializing graph');  
 
         // Clear any existing SVG
         if (this.graphContainer.id) {
@@ -43,7 +44,9 @@ class EARGraph {
 
         // Initialize scales and line
         this.x = d3.scaleTime().range([0, this.width]);
-        this.y = d3.scaleLinear().range([this.height, 0]);
+        this.y = d3.scaleLinear()
+            .range([this.height, 0])
+            .domain([-0.1, 0.8]);
         this.line = d3.line()
             .x(d => this.x(d.time))
             .y(d => this.y(d.value))
@@ -52,7 +55,11 @@ class EARGraph {
         // Add axes
         this.svg.append("g")
             .attr("class", "x-axis")
-            .attr("transform", `translate(0,${this.height})`);
+            .attr("transform", `translate(0,${this.height})`)
+            .call(d3.axisBottom(this.x).tickFormat(d => {
+                const date = new Date(d * 1000);
+                return date.toTimeString().split(' ')[0];
+            }))
 
         this.svg.append("g")
             .attr("class", "y-axis");
@@ -67,17 +74,21 @@ class EARGraph {
 
     update(processedData) {
         if (processedData.value === null) return;
+        const dataPoint = {
+            time: processedData.time instanceof Date ? processedData.time : new Date(processedData.time * 1000),
+            value: processedData.value
+        };
         
-        this.liveGraphData.push(processedData);
+        this.liveGraphData.push(dataPoint);
         
         // Keep last 100 data points
-        if (this.liveGraphData.length > 100) {
+        if (this.liveGraphData.length > 300) {
             this.liveGraphData.shift();
         }
+        console.log('Current y domain:', this.y.domain());
 
         // Update scales
         this.x.domain(d3.extent(this.liveGraphData, d => d.time));
-        this.y.domain([0, d3.max(this.liveGraphData, d => d.value) * 1.1]); // Add 10% padding
 
         // Update line
         this.svg.select(".line")
@@ -85,7 +96,12 @@ class EARGraph {
             .attr("d", this.line);
 
         // Update axes
-        this.svg.select(".x-axis").call(d3.axisBottom(this.x));
+        this.svg.select(".x-axis").call(
+            d3.axisBottom(this.x)
+                .tickFormat(d => {
+                    return d.toTimeString().split(' ')[0]; // Conver unix timestamp to timestamp
+                })
+        );
         this.svg.select(".y-axis").call(d3.axisLeft(this.y));
     }
 
@@ -99,9 +115,10 @@ class EARGraph {
         
         // Re-render the last state
         if (this.liveGraphData.length > 0) {
+            const lastPoint = this.liveGraphData[this.liveGraphData.length - 1];
             this.update({
-                time: new Date(),
-                value: this.liveGraphData[this.liveGraphData.length - 1].value
+                time: lastPoint.time, // Use existing time instead of creating new Date
+                value: lastPoint.value
             });
         }
     }
@@ -199,7 +216,7 @@ class WebcamMonitor {
                     const data = JSON.parse(event.data);
                     // Update graph with processed data
                     this.graph.update({
-                        time: new Date(data.timestamp * 1000),
+                        time: data.timestamp, // Send raw timestamp, let EARGraph handle conversion
                         value: data.processed_data
                     });
                 } catch (error) {
