@@ -3,6 +3,7 @@ from fastapi import Header, HTTPException
 import numpy as np
 import mediapipe as mp
 import cv2
+import time
 
 
 async def get_token_header(x_token: str = Header(default=None)):
@@ -26,13 +27,13 @@ class BlinkDetector:
         self.LEFT_EYE = [362, 385, 387, 263, 373, 380]
         self.RIGHT_EYE = [33, 160, 158, 133, 153, 144]
 
-        # Threshold for eye aspect ratio to indicate blink
-        self.EAR_THRESHOLD = 0.22
-        self.CONSECUTIVE_FRAMES = 2
-
-        # Counters for blink detection
+        # State tracking variable for intelligent blink detection
         self.counter = 0
+        self.closure = None
         self.total_blinks = 0
+        self.EAR_THRESHOLD = 0.27
+        self.MIN_CONSECUTIVE_FRAMES = 6 # Minimum number of consecutive frames to be recognized as a blink
+        self.MAX_CONSECUTIVE_FRAMES = 24
 
         # configs for the instance
         self.annotate = annotate
@@ -54,7 +55,7 @@ class BlinkDetector:
         return ear
     
     
-    def process_frame(self, frame):
+    def process_frame(self, frame, **kwargs):
         """
         Process a single frame and detect blinks
         """
@@ -76,12 +77,21 @@ class BlinkDetector:
 
             # Average EAR
             ear = (left_ear + right_ear) / 2.0
-
+            
+            # Spontaneous blink detection
             if ear < self.EAR_THRESHOLD:
-                if self.counter >= self.CONSECUTIVE_FRAMES:
-                    self.total_blinks += 1
-                    self.counter = 0
-                self.counter += 1
+                if self.closure is None:  # Start of new closure
+                    self.closure = time.time()
+                self.counter += 1  # Increment counter for every frame while eye is closed
+                print(f"self.counter:{self.counter}", ear)
+            
+            elif ear > self.EAR_THRESHOLD:  # Eye is open
+                if self.closure is not None:  
+                    if self.counter >= self.MIN_CONSECUTIVE_FRAMES:
+                        self.total_blinks += 1
+                # Reset tracking variables
+                self.closure = None
+                self.counter = 0
 
             if self.annotate: # Visualization
                 for eye in [left_eye, right_eye]:
