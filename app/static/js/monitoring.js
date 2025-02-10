@@ -54,12 +54,21 @@ class EARGraph {
 
         // Add axes
         this.svg.append("g")
-            .attr("class", "x-axis")
-            .attr("transform", `translate(0,${this.height})`)
-            .call(d3.axisBottom(this.x).tickFormat(d => {
-                const date = new Date(d * 1000);
-                return date.toTimeString().split(' ')[0];
-            }))
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${this.height})`)
+        .call(d3.axisBottom(this.x)
+            .ticks(d3.timeSecond.every(1))  // Update ticks every second
+            .tickFormat(d => {
+                const date = new Date(d);
+                return date.toLocaleTimeString('ko-KR', {
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    timeZone: 'Asia/Seoul'
+                });
+            })
+        );
 
         this.svg.append("g")
             .attr("class", "y-axis");
@@ -75,17 +84,23 @@ class EARGraph {
     update(processedData) {
         if (processedData.value === null) return;
         const dataPoint = {
-            time: processedData.time instanceof Date ? processedData.time : new Date(processedData.time * 1000),
+            time: processedData.time instanceof Date ? processedData.time : new Date(processedData.time),
             value: processedData.value
         };
+        if (this.liveGraphData.length > 0) {
+            const lastTime = this.liveGraphData[this.liveGraphData.length - 1].time;
+            if (dataPoint.time <= lastTime) {
+                // Instead of skipping, use the last time plus 1 millisecond
+                dataPoint.time = new Date(lastTime.getTime() + 1);
+            }
+        }
         
         this.liveGraphData.push(dataPoint);
         
-        // Keep last 100 data points
+        // Keep last 300 data points
         if (this.liveGraphData.length > 300) {
             this.liveGraphData.shift();
         }
-        console.log('Current y domain:', this.y.domain());
 
         // Update scales
         this.x.domain(d3.extent(this.liveGraphData, d => d.time));
@@ -98,8 +113,16 @@ class EARGraph {
         // Update axes
         this.svg.select(".x-axis").call(
             d3.axisBottom(this.x)
+                .ticks(d3.timeSecond.every(1))  // Update ticks every second
                 .tickFormat(d => {
-                    return d.toTimeString().split(' ')[0]; // Conver unix timestamp to timestamp
+                    const date = new Date(d);
+                    return date.toLocaleTimeString('ko-KR', {
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        timeZone: 'Asia/Seoul'
+                    });
                 })
         );
         this.svg.select(".y-axis").call(d3.axisLeft(this.y));
@@ -239,7 +262,7 @@ class WebcamMonitor {
     async processFrames() {
         // Create a ReadableStream from the track processor
         const frameStream = this.trackProcessor.readable;
-        
+        const ws = this.ws;
         // Create a WritableStream for sending frames
         const frameSender = new WritableStream({
             write: async (videoFrame) => {
@@ -247,19 +270,23 @@ class WebcamMonitor {
                     videoFrame.close();
                     return;
                 }
-
                 try {
+                    const frameTimestamp = Date.now(); // To make it compatible with Unix timestamp in sec
+                    console.log(frameTimestamp);
                     // Convert VideoFrame to Blob
                     const bitmap = await createImageBitmap(videoFrame);
                     const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(bitmap, 0, 0);
+                    const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
 
                     // Convert to blob and send
-                    const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
-                    this.ws.send(blob);
-
-                    // Close the frame to prevent memory leaks
+                    const message = new Blob([
+                        JSON.stringify({ timestamp: frameTimestamp }), 
+                        '\n',  // Delimiter
+                        blob
+                    ]);
+                    this.ws.send(message);
                     videoFrame.close();
                     bitmap.close();
                 } catch (error) {
