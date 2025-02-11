@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Request, WebSocket
 from fastapi.websockets import WebSocketDisconnect
+from fastapi.responses import HTMLResponse
 from . import templates
-from ..dependencies import BlinkDetector
-from fastapi.responses import JSONResponse
 import numpy as np
 import time
 import cv2
@@ -10,7 +9,7 @@ import json
 
 router = APIRouter(prefix="/monitoring", tags=["monitoring"])
 
-@router.get("/")
+@router.get("/", response_class=HTMLResponse)
 async def monitoring_page(request: Request):
     return templates.TemplateResponse(
         "monitoring.html",
@@ -21,34 +20,28 @@ async def monitoring_page(request: Request):
 @router.websocket("/websocket_process")
 async def websocket_process(websocket: WebSocket):
     await websocket.accept()
-    print("WebSocket accepted") # log
-    detector = BlinkDetector(annotate=True)
+    print("WebSocket accepted") 
     try:
         while True:
             try:
-                # Receive data packet and 
-                data = await websocket.receive_bytes()
-                metadata_str, frame_bytes = data.split(b'\n', 1)
-                metadata = json.loads(metadata_str)
-                timestamp = metadata['timestamp']
-                nparr = np.frombuffer(frame_bytes, np.uint8)       
-                frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                # Receive JSON data from client
+                data = await websocket.receive_json()
                 
-                # Process
-                annotated_frame, ear_value = detector.process_frame(frame)
+                # Store the received data
+                timestamp = data.get('timestamp')
+                ear_value = data.get('ear_value')
                 
-                # Convert annotated frame back to bytes for backchanneling
-                _, buffer = cv2.imencode('.jpg', annotated_frame)
-                frame_bytes = buffer.tobytes()
+                # You can process or store the data here
+                print(f"Received EAR value: {ear_value} at timestamp: {timestamp}")
                 
-                # Send back results
-                await websocket.send_bytes(frame_bytes)  # Send annotated frame first
+                # Send acknowledgment back to client
                 await websocket.send_json({
-                    "timestamp": timestamp,
-                    "processed_data": -0.1 if ear_value is None else float(ear_value)
-                    })
+                    "status": "received",
+                    "timestamp": timestamp
+                })
             except Exception as e:
-                print(f"Error processing frame: {e}")
+                print(f"Error processing data: {e}")
                 break
+                
     except WebSocketDisconnect:
         print("Client disconnected")

@@ -18,7 +18,7 @@ async def home(request: Request):
     return templates.TemplateResponse(
         "home.html",
         {"request": request, 
-         "message": "This is my new project!"}
+         "message": "Eye Fatigue Monitor"}
     )
 
 @router.post("/login")
