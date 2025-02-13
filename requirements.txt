@@ -6,3 +6,9 @@ numpy==1.26.4
 opencv-python==4.11.0.86
 mediapipe==0.10.20
 websockets==14.2
+pydantic==2.10.6
+pydantic-settings==2.7.1
+passlib[bcrpyt]==1.7.4
+pyjwt==2.10.1
+python-jose[cryptography]
+sqlalchemy==2.0.38
