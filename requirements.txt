@@ -12,3 +12,6 @@ passlib[bcrpyt]==1.7.4
 pyjwt==2.10.1
 python-jose[cryptography]
 sqlalchemy==2.0.38
+psycopg2-binary==2.9.10
+sshtunnel==
+paramiko==

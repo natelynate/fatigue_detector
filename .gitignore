@@ -1,2 +1,7 @@
 fatigue/
 __pycache__
+.env
+*.pyc
+aws-db-server-key.ppk
+aws-db-server-key.pem
+temp.py

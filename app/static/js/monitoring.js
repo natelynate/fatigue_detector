@@ -249,8 +249,6 @@ class WebcamMonitor {
                         willReadFrequently: true
                     });
                     ctx.drawImage(bitmap, 0, 0);
-                    const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
-
                     // Process frame directly with BlinkDetector
                     const result = await this.detector.processFrame(this.displayCanvas);
 

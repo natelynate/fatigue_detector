@@ -1,1 +1,1 @@
-from ..core.config import templates
+from ..core.config import templates, static
