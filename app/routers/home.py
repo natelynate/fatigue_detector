@@ -66,7 +66,6 @@ async def login(
             }
         }
     )
-
     # Set cookies on the response
     login_response.set_cookie(
         key="access_token",

@@ -45,7 +45,7 @@ def create_token(data: Dict[str, Any], token_type: str, expires_delta: Optional[
     # Add claims to token
     to_encode.update({
         "exp": expire,
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(),
         "type": token_type
     })
     
