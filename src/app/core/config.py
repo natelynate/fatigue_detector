@@ -29,7 +29,11 @@ class Settings(BaseSettings):
     
     # Application Settings
     STATIC_DIR: Path = BASE_DIR / "static"
-    TEMPLATES_DIR: Path = BASE_DIR / "templates"
+    TEMPLATES_DIR: Path = BASE_DIR / "templates"    
+
+    # Kafka Settings
+    KAFKA_SERVER:str
+    KAFKA_PORT:int
     
     class Config:
         env_file = BASE_DIR / "core" / ".env"

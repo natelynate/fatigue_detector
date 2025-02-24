@@ -1,0 +1,7 @@
+kafka:
+  replicas: 1
+  zookeeper:
+    enabled: true
+  service:
+    type: ClusterIP
+    port: 9092

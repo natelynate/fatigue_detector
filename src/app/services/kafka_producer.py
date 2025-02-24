@@ -2,16 +2,17 @@ from aiokafka import AIOKafkaProducer
 import json
 import uuid
 from datetime import datetime
+import asyncio
 
 class KafkaService:
     def __init__(self):
         self.producer = None
-        self.session_topic = "sessions"
-        self.frame_topic = "raw-frames"
-
-    async def start(self):
+        self.session_topic = "session_events"
+        self.frame_topic = "frame_data"
+    
+    async def start(self, server='localhost', port=9092):
         self.producer = AIOKafkaProducer(
-            bootstrap_servers='localhost:9092',  # Will be configured via env vars
+            bootstrap_servers=f'{server}:{port}',
             value_serializer=lambda v: json.dumps(v).encode('utf-8'),
             key_serializer=lambda v: str(v).encode('utf-8')
         )
