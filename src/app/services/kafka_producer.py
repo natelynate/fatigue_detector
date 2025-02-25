@@ -2,7 +2,7 @@ from aiokafka import AIOKafkaProducer
 import json
 import uuid
 from datetime import datetime
-import asyncio
+
 
 class KafkaService:
     def __init__(self):
