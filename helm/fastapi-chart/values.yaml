@@ -1,7 +1,0 @@
-fastapi:
-  image: python:3.11
-  sourceCode:
-    hostPath: /home/ubuntu/project/src
-    containerPath: /app
-  kafka:
-    bootstrapServers: "my-kafka:9092"

@@ -1,4 +1,0 @@
-apiVersion: v2
-name: fastapi-app
-description: A Helm chart for FastAPI development
-version: 0.1.0

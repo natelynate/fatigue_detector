@@ -1,4 +1,0 @@
-apiVersion: v2
-name: kafka-dev
-description: A Helm chart for Kafka development
-version: 0.1.0
