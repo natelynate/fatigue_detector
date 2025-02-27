@@ -5,3 +5,5 @@ __pycache__
 aws-db-server-key.ppk
 aws-db-server-key.pem
 temp.py
+helm/
+helm/fastapi-chart/values.yaml
