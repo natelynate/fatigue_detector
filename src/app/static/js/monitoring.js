@@ -298,13 +298,28 @@ class WebcamMonitor {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
-    navigator.mediaDevices.getUserMedia({ video: true })
-    const monitor = new WebcamMonitor();
-    document.getElementById('recordBtn').addEventListener('click', () => {
-        if (monitor.isRecording) {
-            monitor.stopRecording();
-        } else {
-            monitor.startRecording();
-        }
-    });
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                // Camera access granted, but we don't use the stream
+                console.log("Camera access granted");
+                
+                // Initialize your monitor, etc.
+                const monitor = new WebcamMonitor();
+                
+                // Set up event listeners
+                document.getElementById('recordBtn').addEventListener('click', () => {
+                    if (monitor.isRecording) {
+                        monitor.stopRecording();
+                    } else {
+                        monitor.startRecording();
+                    }
+                });
+            })
+            .catch(error => {
+                console.error("Cannot access camera:", error);
+            });
+    } else {
+        console.error("mediaDevices API not supported");
+    }
 });
