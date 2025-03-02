@@ -298,6 +298,7 @@ class WebcamMonitor {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
+    navigator.mediaDevices.getUserMedia({ video: true })
     const monitor = new WebcamMonitor();
     document.getElementById('recordBtn').addEventListener('click', () => {
         if (monitor.isRecording) {
