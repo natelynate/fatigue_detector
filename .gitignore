@@ -6,3 +6,5 @@ aws-db-server-key.ppk
 aws-db-server-key.pem
 temp.py
 helm/
+schema/
+local_dev_kafka_config/
