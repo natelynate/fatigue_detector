@@ -71,6 +71,8 @@ export class BlinkDetector {
         
         let ear = null;
         const ctx = canvas.getContext('2d');
+        let event_onset = false;  // Initialize to false by default
+        let event_end = false;    // Initialize to false by default
 
         if (this.results && this.results.multiFaceLandmarks && this.results.multiFaceLandmarks.length > 0) {
             const faceLandmarks = this.results.multiFaceLandmarks[0];
@@ -92,6 +94,8 @@ export class BlinkDetector {
             if (0 < ear && ear < this.EAR_THRESHOLD) {
                 if (this.closure === null) {
                     this.closure = Date.now();
+                    event_onset = true;  // Signal blink onset
+                    console.log("Blink onset detected"); // debug
                 }
                 this.counter++;
                 console.log(`counter:${this.counter}`, ear, this.total_blinks);
@@ -99,6 +103,8 @@ export class BlinkDetector {
                 if (this.closure !== null) {
                     if (this.counter >= this.MIN_CONSECUTIVE_FRAMES) {
                         this.total_blinks++;
+                        event_end = true;  // Signal valid blink end
+                        console.log("Blink end detected");
                     }
                     this.closure = null;
                     this.counter = 0;
@@ -124,7 +130,9 @@ export class BlinkDetector {
 
         return {
             ear_value: ear,
-            timestamp: Date.now() / 1000
+            timestamp: Date.now() / 1000,
+            event_onset: event_onset,
+            event_end: event_end
         };
     }
 }
