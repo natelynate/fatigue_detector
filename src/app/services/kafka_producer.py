@@ -9,6 +9,7 @@ class KafkaService:
         self.producer = None
         self.session_topic = "session_events"
         self.frame_topic = "frame_data"
+        self.blink_topic = "blink_event"
     
     async def start(self, server='localhost', port=9092):
         self.producer = AIOKafkaProducer(
@@ -52,4 +53,16 @@ class KafkaService:
             topic=self.frame_topic,
             key=str(session_id),  # Using session_id as key to keep frames ordered
             value=frame_data
+        )
+
+    async def send_blink_data(self, session_id:int, start_timestamp:float, end_timestamp:float):
+        blink_data = {
+            "session_id":session_id,
+            "start_timestamp":start_timestamp,
+            "end_timestamp":end_timestamp
+        }
+        await self.producer.send(
+            topic=self.blink_topic,
+            key=str(session_id),  # Using session_id as key to keep frames ordered
+            value=blink_data
         )
