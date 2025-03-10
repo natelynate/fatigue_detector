@@ -256,7 +256,9 @@ class WebcamMonitor {
                     if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
                         const data = {
                             timestamp: result.timestamp,
-                            ear_value: result.ear_value
+                            ear_value: result.ear_value,
+                            event_onset: result.event_onset,
+                            event_end: result.event_end
                         };
                         this.websocket.send(JSON.stringify(data));
                     }

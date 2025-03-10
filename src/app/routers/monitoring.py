@@ -73,17 +73,17 @@ async def websocket_process(websocket:WebSocket,
             try:
                 # Receive JSON data from client
                 data = await websocket.receive_json()
-                
+            
                 # Send the received data to t Kafka session
                 timestamp = data.get('timestamp')
                 ear_value = data.get('ear_value')
                 logger.info(f"Received EAR value: {ear_value} at timestamp: {timestamp}") # debug
 
                 # Message handling for blink events
-                if data["event_onset"]:
+                if data.get("event_onset"):
                     last_event_onset = timestamp
                     logger.debug(f"Blink onset detected at {timestamp}") # debug
-                elif data["event_end"]:
+                elif data.get("event_end"):
                     await kafka_service.send_blink_data(session_id, last_event_onset, timestamp)
                     blink_duration = timestamp - last_event_onset
                     logger.debug(f"Blink end detected at {timestamp}, duration: {blink_duration:.3f}s") # debug
