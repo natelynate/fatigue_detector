@@ -43,7 +43,7 @@ class BaseKafkaConsumer:
             self._connect_db()
             logger.info(f"Successfully conntected to Database.")
         except Exception as e:
-            logger.info(f"Error connecting to Database: {e}")
+            logger.info(f"Error connecting to Database: {self.topic}, {e}")
         
         # Start processing loop
         await self._process_messages()

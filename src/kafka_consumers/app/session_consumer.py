@@ -1,6 +1,6 @@
 from base_consumer import BaseKafkaConsumer
 import logging
-import statistics
+# import statistics
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ class SessionEventConsumer(BaseKafkaConsumer):
                     )
                 
                 # Calculate session statistics # To be implemented
-                # await self._calculate_session_metrics(session_id)
+                await self._calculate_session_metrics(session_id)
                 
                 # Remove from active sessions
                 if session_id in self.active_sessions:
@@ -76,31 +76,31 @@ class SessionEventConsumer(BaseKafkaConsumer):
                 logger.info(f"Completed session {session_id} with status {status}")
         
         except Exception as e:
-            logger.error(f"Error processing session event: {e}")
+            logger.error(f"Error at SessionEventConsumer's self.process_message: {e}")
     
     
-    # async def _calculate_session_metrics(self, session_id):
-    #     """Calculate and store session metrics"""
-    #     try:
-    #         # Fetch all blink events for this session
-    #         with self.db_conn.cursor() as cursor:
-    #             cursor.execute(
-    #                 """
-    #                 SELECT duration, interval 
-    #                 FROM blink_events 
-    #                 WHERE session_id = %s 
-    #                 AND duration IS NOT NULL
-    #                 ORDER BY start_time
-    #                 """,
-    #                 (session_id,)
-    #             )
-    #             blink_data = cursor.fetchall()
+    async def _calculate_session_metrics(self, session_id):
+        """Calculate and store session metrics"""
+        try:
+            with self.db_conn.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT duration, interval
+                    FROM operation.blink_events
+                    WHERE session_id = {session_id}
+                    AND duration IS NOT NULL
+                    ORDER BY start_time
+                    """
+                )
+                blink_data = cursor.fetchall()
+                logger.info(blink_data) # debug
+                if not blink_data:
+                    logger.warning(f"No blink data found for session {session_id}")
+                    return
+        except Exception as e:
+            logger.info(f"Error at SessionEventConsumer's self.calculate_session_metrics:{e}")
             
-    #         # Return if no blink data
-    #         if not blink_data:
-    #             logger.warning(f"No blink data found for session {session_id}")
-    #             return
-                
+
     #         # Extract durations and intervals
     #         durations = [row[0] for row in blink_data if row[0] is not None]
     #         intervals = [row[1] for row in blink_data if row[1] is not None]

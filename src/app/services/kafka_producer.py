@@ -45,7 +45,7 @@ class KafkaService:
     async def send_frame_data(self, session_id: int, timestamp: float, ear_value: float):
         frame_data = {
             "session_id": session_id,
-            "timeframe": timestamp,
+            "timestamp": timestamp,
             "ear_value": ear_value
         }
         
