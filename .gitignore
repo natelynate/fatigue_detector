@@ -8,3 +8,5 @@ temp.py
 helm/
 schema/
 local_dev_kafka_config/
+kafka_consumers/scripts/
+local_dev_kafka_config/create-topic.sh
