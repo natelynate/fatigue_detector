@@ -10,3 +10,7 @@ schema/
 local_dev_kafka_config/
 kafka_consumers/scripts/
 local_dev_kafka_config/create-topic.sh
+src/kafka_consumers/commands.txt
+src/kafka_consumers/scripts/blink_consumer.bat
+src/kafka_consumers/scripts/frame_consumer.bat
+src/kafka_consumers/scripts/session_consumer.bat
