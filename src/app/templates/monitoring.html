@@ -8,8 +8,22 @@
 
     <script src="https://d3js.org/d3.v7.min.js"></script> <!-- D3.js -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script> <!-- MediaPipe Face Mesh -->
+    <link rel="stylesheet" href="/static/css/navbar.css">
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <a href="/" id="newSessionBtn" class="nav-link active">
+            <i class="fas fa-play-circle"></i> Start New Session
+        </a>
+        <a href="/stats/sessions" id="pastSessionsBtn" class="nav-link">
+            <i class="fas fa-history"></i> Past Sessions
+        </a>
+        <a href="#" id="configBtn" class="nav-link">
+            <i class="fas fa-cog"></i> Configuration
+        </a>
+    </div>
+
     <div class="container">
         <div class="section record-section">
             <button id="recordBtn" class="record-button">

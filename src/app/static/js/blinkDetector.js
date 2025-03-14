@@ -8,7 +8,7 @@ export class BlinkDetector {
         this.counter = 0;
         this.closure = null;
         this.total_blinks = 0;
-        this.EAR_THRESHOLD = 0.28;
+        this.EAR_THRESHOLD = 0.30;
         this.MIN_CONSECUTIVE_FRAMES = 4;
         this.MAX_CONSECUTIVE_FRAMES = 24;
 
