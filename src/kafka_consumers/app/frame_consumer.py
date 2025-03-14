@@ -48,16 +48,17 @@ class FrameEventConsumer(BaseKafkaConsumer):
                 return
             
             # Insert into database using parameterized query
-            with self.db_conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO operation.raw_frame_data
-                    (session_id, timestamp, ear)
-                    VALUES (%s, %s, %s)
-                    """,
-                    (session_id, timestamp, ear_value)
-                )
-                
+            if self.db_config['write'] == 1:
+                with self.db_conn.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        INSERT INTO operation.raw_frame_data
+                        (session_id, timestamp, ear)
+                        VALUES (%s, %s, %s)
+                        """,
+                        (session_id, timestamp, ear_value)
+                    )
+                    
             logger.debug(f"Stored frame data for session {session_id}: timestamp={timestamp}, ear={ear_value}")
             
         except Exception as e:

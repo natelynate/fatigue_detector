@@ -23,6 +23,7 @@ async def main():
         'user': os.environ.get('DATABASE_USER'),
         'password': os.environ.get('DATABASE_PASSWORD', ''),
         'dbname': os.environ.get('DATABASE_NAME'),
+        'write':os.environ.get('WRITE')
     }
     
     ssh_config = None
